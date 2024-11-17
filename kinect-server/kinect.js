@@ -12,6 +12,8 @@ const kinect = new KinectAzure();
 const width = 320;
 const height = 288;
 
+let psoSolvingFlag = false;
+
 wss.on("connection", function connection(ws) {
     clients.add(ws);
     ws.on("message", function incoming(message) {
@@ -38,33 +40,27 @@ if (kinect.open()) {
         processing_mode: KinectAzure.K4ABT_TRACKER_PROCESSING_MODE_GPU_CUDA
     });
     kinect.startListening((data) => {
+        let target = new Array(3).fill(0).map(() => Math.floor(Math.random() * 100));
         if (data.bodyFrame.numBodies === 0) {
+            if (!psoSolvingFlag) {
+                psoSolvingFlag = true;
+                solvePSO(target).then((solution) => {
+                    psoSolvingFlag = false;
+                    console.log(solution);
+                });
+            }
             return;
         }
         console.log("Number of bodies: ", data.bodyFrame.numBodies);
         // handle body data
+        console.log("Head joint:", data.bodyFrame.bodies[0].skeleton.joints[KinectAzure.K4ABT_JOINT_NECK]);
 
-        //console.log(data.bodyFrame.bodies[0].skeleton.joints[KinectAzure.K4ABT_JOINT_NECK]);
-        // handle depth data
-        // const newDepthData = Buffer.from(data.depthImageFrame.imageData);
-        // const depthBuffer = new Uint16Array(newDepthData.length / 2);
-        // for (let i = 0; i < newDepthData.length; i += 2) {
-        //     const depthValue = (newDepthData[i + 1] << 8) | newDepthData[i];
-        //     depthBuffer[i / 2] = depthValue;
-        // }
-        // const downSampledDepthBuffer = new Uint16Array(64 * 64);
-        // for (let i = 0; i < 64; i++) {
-        //     for (let j = 0; j < 64; j++) {
-        //         const index = (j * 4 * width + i * 4);
-        //         const depthValue = depthBuffer[index];
-        //         downSampledDepthBuffer[j * 64 + i] = depthValue / 10;
-        //     }
-        // }
-
+        // Handle depth data
         const maskedDepthBuffer = depthImageFrameMasked(data.depthImageFrame, data.bodyFrame.bodyIndexMapImageFrame, 2);
-
         const kernel = createGaussianKernel(25, 5);
         const blurredDepthBuffer = applyGaussianBlur(maskedDepthBuffer, width / 2, height / 2, kernel);
+
+        // Send tracking to clients
         clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(blurredDepthBuffer);
@@ -161,23 +157,42 @@ function applyGaussianBlur(depthBuffer, width, height, kernel) {
 
 async function solvePSO(target) {
     return new Promise((resolve, reject) => {
-        const worker = new Worker('./kinect-server/swarm.js');
+        const worker = new Worker('./kinect-server/swarm.js'); // Create a new worker for each task
+
         worker.postMessage(target);
-        worker.on('message', resolve);
-        worker.on('error', reject);
-        worker.on('exit', (code) => {
-            if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+        worker.once('message', (message) => {
+            resolve(message);
+            worker.terminate(); // Terminate the worker after receiving the message
+        });
+        worker.once('error', (error) => {
+            reject(error);
+            worker.terminate(); // Terminate the worker on error
+        });
+        worker.once('exit', (code) => {
+            if (code !== 0) {
+                reject(new Error(`Worker stopped with exit code ${code}`));
+            }
         });
     });
 }
 
-let controller = null;
-setInterval(async () => {
-    const target = [100,100,100];
-    const solution = await solvePSO(target);
-    controller = solution;
-    //console.log(solution);
-}, 1000);
-setInterval(() => {
-    console.log(controller);
-},5000);
+setImmediate(test);
+
+async function test() {
+    const target = [- 100, 100, 100];
+    // const time = Date.now() / 1000;
+    // const radius = 100;
+    // const target = [
+    //     radius * Math.cos(time/5),
+    //     150,
+    //     radius * Math.sin(time/5)
+    // ];
+    await solvePSO(target).then((solution) => {
+        clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({ type: "state", pos: solution, target: target }));
+            }
+        });
+        setImmediate(test);
+    });
+}

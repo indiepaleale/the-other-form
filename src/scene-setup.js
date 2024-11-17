@@ -18,7 +18,7 @@ const perspHandler = {
 export const scene = new THREE.Scene();
 
 // Perspective camera setup
-export const perspectiveCamera = new THREE.PerspectiveCamera(perspHandler.updateFov(150), window.innerWidth / window.innerHeight, 0.1, 100000);
+export const perspectiveCamera = new THREE.PerspectiveCamera(perspHandler.updateFov(150), window.innerWidth / window.innerHeight, 0.1, 1000);
 perspectiveCamera.position.set(
     perspHandler.eye2screen[0],
     perspHandler.eye2screen[1],
@@ -63,7 +63,7 @@ perspectiveCamera.lookAt(
     perspHandler.tvPos[2] + perspHandler.spaceDims[2] / 2);
 
 
-scene.fog = new THREE.Fog(0x000000, 300, 450);
+//scene.fog = new THREE.Fog(0x000000, 300, 450);
 scene.background = new THREE.Color(0x000000);
 
 
@@ -162,6 +162,7 @@ export const trace = {
     init() {
         this.pointsBufferGeometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
         this.points = new THREE.Points(this.pointsBufferGeometry, this.pointsMaterial);
+        this.points.frustumCulled = false;
         scene.add(this.points);
     },
 

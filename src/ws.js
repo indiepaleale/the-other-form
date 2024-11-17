@@ -1,23 +1,25 @@
 import { pyBackend } from './gui';
 import { kinectDepth } from './scene-setup';
 
-const url = 'ws://localhost:8001';
+const KINECT_HOST = import.meta.env.VITE_KINECT_HOST || 'localhost';
+const KINECT_PORT = import.meta.env.VITE_KINECT_PORT || 8001;
+
+const url = `ws://${KINECT_HOST}:${KINECT_PORT}`;
 const socket = new WebSocket(url);
 socket.binaryType = 'arraybuffer';
 
 let state_buffer = [];
-
+let controlTarget = [0, 0, 0, 0];
 
 // Event listener for when the connection is opened
 socket.addEventListener('open', () => {
-    console.log('Connected to the WebSocket server');
     socket.send(JSON.stringify({ type: 'identify', role: 'frontend' }));
 });
 
 // Event listener for when a message is received from the server
 socket.addEventListener('message', (event) => {
-    console.log('Received message:', typeof event.data);
-    console.log(event.data);
+    //console.log('Received message:', typeof event.data);
+    //console.log(event.data);
     handleMessage(event.data);
 });
 
@@ -33,39 +35,44 @@ socket.addEventListener('close', (event) => {
 
 // Function to handle received messages
 function handleMessage(message) {
-    if (true) {
+    if (typeof message === 'string') {
+        try {
+            const parsedMessage = JSON.parse(message);
+            switch (parsedMessage.type) {
+                case 'depthData':
+                    console.log('Received depth data');
+
+                case 'state':
+                    const state = {
+                        pos: parsedMessage.pos,
+                        target: parsedMessage.target,
+                        end: parsedMessage.end,
+                    }
+                    controlTarget = state.pos;
+                    state_buffer.push(state);
+                    break;
+
+                case 'message':
+                    pyBackend.setStatus(parsedMessage.status);
+                default:
+                    break;
+            }
+            // console.log(parsedMessage);
+        }
+        catch (e) {
+            console.log(message);
+        }
+    }
+    // needs validation here
+    else if (message instanceof ArrayBuffer) {
         const uint8Array = new Uint8Array(message);
         const firstByte = uint8Array[0];
         if (firstByte === 123) {
             const decoder = new TextDecoder('utf-8');
-            const jsonString = decoder.decode(message);
-            try {
-                const parsedMessage = JSON.parse(jsonString);
-                switch (parsedMessage.type) {
-                    case 'depthData':
-                        console.log('Received depth data');
-
-                    case 'state':
-                        const state = {
-                            pos: parsedMessage.pos,
-                            target: parsedMessage.target,
-                            end: parsedMessage.end,
-                        }
-                        state_buffer.push(state);
-                        break;
-
-                    case 'message':
-                        pyBackend.setStatus(parsedMessage.status);
-                    default:
-                        break;
-                }
-                // console.log(parsedMessage);
-            }
-            catch (e) {
-                console.error('Failed to parse message:', e);
-            }
+            console.log('Received byte to JSON:', decoder.decode(uint8Array));
         }
         else {
+            console.log('Received byte, length: ', message.byteLength);
             try {
                 const uint16Array = new Uint16Array(message);
                 kinectDepth.updateVert(uint16Array);
@@ -117,4 +124,4 @@ function reset() {
     }
 }
 
-export { tick, reset, state_buffer };
+export { tick, reset, state_buffer, controlTarget };

@@ -29,7 +29,7 @@ function solvePSO(target) {
     const solutions = Array.from(solver.search())
         .map(p => ({ p, fit: caculateScore(p, target) }))
         .sort((o1, o2) => (o1.score > o2.score ? 1 : -1))
-    console.log("solution: ", angle2control(solutions[0].p), "\nfit: ", solutions[0].fit);
+    //console.log("solution: ", angle2control(solutions[0].p), "\nfit: ", solutions[0].fit);
     return angle2control(solutions[0].p);
 
 }
@@ -42,7 +42,12 @@ function caculateScore(angles, target) {
     const [t1, a1, t2, a2] = angles;
     const off = angleOff(angles, target);
     const score = -(off ** 2) - 0.001 * (t1 ** 2);
-    return score;
+    if (Object.is(score, Infinity) || Object.is(score, NaN)) {
+        return -Infinity;
+    }
+    else {
+        return score;
+    }
 }
 function angleOff(angles, target) {
     // console.log("optimizing for target: ", target);
