@@ -1,22 +1,13 @@
-// Nodejs side code
-
 const { create, all } = require("mathjs");
-
-const readline = require("readline");
-
+const { parentPort } = require("worker_threads");
 const PSO = require("particle-swarm-optimization");
 
 const math = create(all);
-//const ws = new WebSocket("ws://localhost:8001");
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: '> new target: ',
+parentPort.on("message", (target) => {
+    const solution = solvePSO(target);
+    parentPort.postMessage(solution);
 });
-
-
-let globalTarget = [0, 200, 0];
 
 const opts = {
     timeOutMS: 1 * 1000,
@@ -30,49 +21,34 @@ const opts = {
     maxVel: 1,
     minVel: -1,
 }
-const pso = new PSO(scoreFunc, 4, opts);
 
-rl.on('line', (input) => {
-    const target = input.trim().split(' ').map(Number).slice(0, 3);
-    console.log(`new target: ${target}`);
-    globalTarget = target;
-    const solutions = Array.from(pso.search())
-        .map(p => ({ p, fit: scoreFunc(p) }))
+function solvePSO(target) {
+
+    const solver = new PSO(makeScoreFunc(target), 4, opts);
+    console.log("solving for target: ", target);
+    const solutions = Array.from(solver.search())
+        .map(p => ({ p, fit: caculateScore(p, target) }))
         .sort((o1, o2) => (o1.score > o2.score ? 1 : -1))
-    console.log(solutions[0].fit);
-    console.log(angle2control(solutions[0].p));
-    const message = {
-        type: "state",
-        pos: angle2control(solutions[0].p),
-        target: target,
+    console.log("solution: ", angle2control(solutions[0].p), "\nfit: ", solutions[0].fit);
+    return angle2control(solutions[0].p);
+
+}
+function makeScoreFunc(target) {
+    return function (angles) {
+        return caculateScore(angles, target);
     }
-
-    //ws.send(JSON.stringify(message));
-
-    rl.prompt();
-});
-
-// Display the initial prompt
-rl.prompt();
-
-//ws.onopen = () => { ws.send("Hello from the client!"); };
-
-const constrainMin = [-3.3333, -Math.PI, -3.3333, -Math.PI]
-const constrainMax = [3.3333, Math.PI, 3.3333, Math.PI]
-
-
-const solutions = Array.from(pso.search())
-    .map(p => ({ p, fit: scoreFunc(p) }))
-    .sort((o1, o2) => (o1.score > o2.score ? 1 : -1))
-console.log(solutions[0].fit);
-console.log(angle2control(solutions[0].p));
-
-
+}
+function caculateScore(angles, target) {
+    const [t1, a1, t2, a2] = angles;
+    const off = angleOff(angles, target);
+    const score = -(off ** 2) - 0.001 * (t1 ** 2);
+    return score;
+}
 function angleOff(angles, target) {
     // console.log("optimizing for target: ", target);
     const [theta1, alpha1, theta2, alpha2] = angles;
-    const T_10 = getTransformationMatrix(theta1, alpha1, 36);
-    const T_21 = getTransformationMatrix(theta2, alpha2, 36);
+    const T_10 = getTransformationMatrix(theta1, alpha1, 25);
+    const T_21 = getTransformationMatrix(theta2, alpha2, 35);
 
     let h_end_pointing = [0, 1, 0, 0];
     let h_end_pos = [0, 0, 0, 1];
@@ -96,12 +72,7 @@ function angle2control(angles) {
     return [x1, z1, x2, z2];
 }
 
-function scoreFunc(angles) {
-    const [t1, a1, t2, a2] = angles;
-    const off = angleOff(angles, globalTarget);
-    const score = -(off ** 2) - 0.001 * (t1 ** 2);
-    return score;
-}
+
 function getTransformationMatrix(theta, alpha, length) {
     const cosTheta = Math.cos(theta);
     const sinTheta = Math.sin(theta);

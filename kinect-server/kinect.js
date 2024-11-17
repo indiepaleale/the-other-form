@@ -1,15 +1,16 @@
 process.env.PATH = process.env.PATH + ';C:\\Program Files\\Azure Kinect Body Tracking SDK\\tools';
-
+const { Worker } = require('worker_threads');
 const KinectAzure = require('kinect-azure');
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8001 });
+const WS_PORT = process.env.KINECT_PORT || 8001;
+
+const wss = new WebSocket.Server({ port: WS_PORT });
 const clients = new Set();
 const kinect = new KinectAzure();
 
 const width = 320;
 const height = 288;
-
 
 wss.on("connection", function connection(ws) {
     clients.add(ws);
@@ -157,3 +158,26 @@ function applyGaussianBlur(depthBuffer, width, height, kernel) {
 
     return blurredBuffer;
 }
+
+async function solvePSO(target) {
+    return new Promise((resolve, reject) => {
+        const worker = new Worker('./kinect-server/swarm.js');
+        worker.postMessage(target);
+        worker.on('message', resolve);
+        worker.on('error', reject);
+        worker.on('exit', (code) => {
+            if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+        });
+    });
+}
+
+let controller = null;
+setInterval(async () => {
+    const target = [100,100,100];
+    const solution = await solvePSO(target);
+    controller = solution;
+    //console.log(solution);
+}, 1000);
+setInterval(() => {
+    console.log(controller);
+},5000);
