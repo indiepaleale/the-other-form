@@ -1,11 +1,13 @@
 process.env.PATH = process.env.PATH + ';C:\\Program Files\\Azure Kinect Body Tracking SDK\\tools';
-const { Worker } = require('worker_threads');
-const KinectAzure = require('kinect-azure');
-const WebSocket = require('ws');
+//import kinectazure from 'kinect-azure';
+import { Worker } from 'worker_threads';
+import { WebSocket, WebSocketServer } from 'ws';
+const K4A = await import('kinect-azure');
+const KinectAzure = K4A.default;
 
-const WS_PORT = process.env.KINECT_PORT || 8001;
+const KINECT_PORT = process.env.KINECT_PORT || 8001;
 
-const wss = new WebSocket.Server({ port: WS_PORT });
+const wss = new WebSocketServer({ port: KINECT_PORT });
 const clients = new Set();
 const kinect = new KinectAzure();
 

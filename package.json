@@ -10,6 +10,7 @@
     "particle-swarm": "^1.0.7",
     "particle-swarm-optimization": "^1.0.2",
     "peerjs": "^1.5.4",
+    "serialport": "^12.0.0",
     "three": "^0.170.0",
     "ws": "^8.18.0"
   },

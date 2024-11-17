@@ -2,14 +2,18 @@ import OSC from 'osc-js'
 import { SerialPort } from 'serialport'
 import WebSocket from 'ws'
 
-const config = { udpClient: { port: 8080 } }
-const osc = new OSC({ plugin: new OSC.BridgePlugin(config) })
+const OSC_PORT = process.env.OSC_PORT || 8080;
+const SERIAL_SOCKET_PORT = process.env.SERIAL_SOCKET_PORT || 8000;
+const SERIAL_PORT = process.env.SERIAL_PORT || 'COM3';
 
-const serialPort = new SerialPort({ path: "COM3", baudRate: 9600 }, err => {
+const config = { udpClient: { port: OSC_PORT } };
+const osc = new OSC({ plugin: new OSC.BridgePlugin(config) });
+
+const serialPort = new SerialPort({ path: SERIAL_PORT, baudRate: 9600 }, err => {
   if (err) console.error(err)
-})
+});
 
-osc.open() // start a WebSocket server on port 8080
+osc.open(); // start a WebSocket server on port 8080
 
 osc.on('/test/random', message => {
   // console.log(message.args)
@@ -26,12 +30,13 @@ serialPort.on('close', function () {
 function writeToSerialPort(message) {
   serialPort.write(message, err => {
     if (err) console.error(err)
-  })
+  });
 
 }
 
+
 //
-const wss = new WebSocket.Server({ port: 8000 })
+const wss = new WebSocket.Server({ port: SERIAL_SOCKET_PORT })
 
 wss.on('connection', ws => {
   console.log('WebSocket client connected')
