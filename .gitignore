@@ -1,1 +1,7 @@
 /node_modules
+
+arduino/.pio
+arduino/.vscode
+arduino/.vscode/c_cpp_properties.json
+arduino/.vscode/launch.json
+arduino/.vscode/ipch
