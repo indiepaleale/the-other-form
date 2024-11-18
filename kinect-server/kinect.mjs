@@ -47,15 +47,35 @@ if (kinect.open()) {
             if (!psoSolvingFlag) {
                 psoSolvingFlag = true;
                 solvePSO(target).then((solution) => {
-                    psoSolvingFlag = false;
-                    console.log(solution);
+                    //console.log(solution);
+                    clients.forEach(client => {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(JSON.stringify({ type: 'state', target: [0, 0, 0], pos: solution }));
+                        }
+                    });
                 });
             }
             return;
         }
-        console.log("Number of bodies: ", data.bodyFrame.numBodies);
+        // console.log("Number of bodies: ", data.bodyFrame.numBodies);
         // handle body data
-        console.log("Head joint:", data.bodyFrame.bodies[0].skeleton.joints[KinectAzure.K4ABT_JOINT_NECK]);
+        //console.log("Neck joint:", data.bodyFrame.bodies[0].skeleton.joints[KinectAzure.K4ABT_JOINT_NECK]);
+        const neckJoint = data.bodyFrame.bodies[0].skeleton.joints[KinectAzure.K4ABT_JOINT_NECK];
+        const targetKinectFrame = [neckJoint.cameraX, neckJoint.cameraY, neckJoint.cameraZ];
+        const targetRobotFrame = KinectFrame2RobotFrame(targetKinectFrame);
+
+        if (!psoSolvingFlag) {
+            psoSolvingFlag = true;
+            console.log("Head Target: ", targetRobotFrame);
+            solvePSO(targetRobotFrame).then((solution) => {
+                clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ type: 'state', target: targetRobotFrame, pos: solution }));
+                    }
+                });
+                //console.log(solution);
+            });
+        }
 
         // Handle depth data
         const maskedDepthBuffer = depthImageFrameMasked(data.depthImageFrame, data.bodyFrame.bodyIndexMapImageFrame, 2);
@@ -126,7 +146,12 @@ function createGaussianKernel(size, sigma) {
 
     return kernel;
 }
-
+function KinectFrame2RobotFrame(pos) {
+    const x = - pos[0] / 10;
+    const y = pos[1] / 10 + 100;
+    const z = pos[2] / 10 - 50;
+    return [x, y, z];
+}
 function applyGaussianBlur(depthBuffer, width, height, kernel) {
     const blurredBuffer = new Uint16Array(depthBuffer.length);
     const kernelSize = kernel.length;
@@ -164,6 +189,7 @@ async function solvePSO(target) {
         worker.postMessage(target);
         worker.once('message', (message) => {
             resolve(message);
+            setTimeout(() => { psoSolvingFlag = false }, 1000);
             worker.terminate(); // Terminate the worker after receiving the message
         });
         worker.once('error', (error) => {
@@ -175,26 +201,5 @@ async function solvePSO(target) {
                 reject(new Error(`Worker stopped with exit code ${code}`));
             }
         });
-    });
-}
-
-setImmediate(test);
-
-async function test() {
-    const target = [- 100, 100, 100];
-    // const time = Date.now() / 1000;
-    // const radius = 100;
-    // const target = [
-    //     radius * Math.cos(time/5),
-    //     150,
-    //     radius * Math.sin(time/5)
-    // ];
-    await solvePSO(target).then((solution) => {
-        clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ type: "state", pos: solution, target: target }));
-            }
-        });
-        setImmediate(test);
     });
 }

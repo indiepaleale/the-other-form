@@ -216,9 +216,9 @@ export const kinectDepth = {
         for (let i = 0; i < this.depthMapWidth; i++) {
             for (let j = 0; j < this.depthMapHeight; j++) {
                 const index = (j * this.depthMapWidth + i) * 3;
-                this.vertices[index] = i * 200 / this.depthMapWidth - 100;;
-                this.vertices[index + 1] = (this.depthMapHeight - j) * 180 / this.depthMapHeight;
-                this.vertices[index + 2] = -100 + depthBuffer[j * this.depthMapWidth + i] / 10;
+                this.vertices[index] = this.width / 2 - i * this.width / this.depthMapWidth;
+                this.vertices[index + 1] = (this.depthMapHeight - j) * this.height / this.depthMapHeight;
+                this.vertices[index + 2] = -75 + depthBuffer[j * this.depthMapWidth + i] / 10;
             }
         }
 

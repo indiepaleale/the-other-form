@@ -1,7 +1,7 @@
 import { pyBackend } from './gui';
 import { kinectDepth } from './scene-setup';
 
-const KINECT_HOST = import.meta.env.VITE_KINECT_HOST || 'localhost';
+const KINECT_HOST = 'localhost';
 const KINECT_PORT = import.meta.env.VITE_KINECT_PORT || 8001;
 
 const url = `ws://${KINECT_HOST}:${KINECT_PORT}`;
@@ -10,6 +10,7 @@ socket.binaryType = 'arraybuffer';
 
 let state_buffer = [];
 let controlTarget = [0, 0, 0, 0];
+let head = [0, 0, 0];
 
 // Event listener for when the connection is opened
 socket.addEventListener('open', () => {
@@ -49,6 +50,7 @@ function handleMessage(message) {
                         end: parsedMessage.end,
                     }
                     controlTarget = state.pos;
+                    head = state.target;
                     state_buffer.push(state);
                     break;
 
@@ -124,4 +126,4 @@ function reset() {
     }
 }
 
-export { tick, reset, state_buffer, controlTarget };
+export { tick, reset, state_buffer, controlTarget, head };

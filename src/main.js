@@ -25,6 +25,8 @@ const sphereGeometry = new THREE.SphereGeometry(5, 32, 32); // Radius 5, 32 segm
 const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color
 const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
+lowerSegment.rootObject.add(sphere);
+
 //lowerSegment.rootObject.add(sphere, line);
 
 
@@ -61,6 +63,8 @@ smoothControl.update(8);
 
 function animate(deltaTime) {
     tentacleControls.update();
+    //console.log(sphere.position);
+    sphere.position.set(socket.head[0], socket.head[1], socket.head[2]);
     smoothControl.setTarget(socket.controlTarget);
     smoothControl.update(deltaTime);
     //console.log(smoothControl.target);
