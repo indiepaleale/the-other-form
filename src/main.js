@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { scene, perspectiveCamera, renderer, orthoCamera } from './scene-setup';
+import { scene, perspectiveCamera, renderer, orthoCamera, updateCamera } from './scene-setup';
 import { initTentacle } from './tentacle';
-import { tentacleControls, pyBackend } from './gui';
+import { tentacleControls, pyBackend, send2Raspi } from './gui';
 import * as socket from './ws';
 //import './target'
 
@@ -35,8 +35,37 @@ const smoothControl = {
     value: [0, 0, 0, 0],
     target: [0, 0, 0, 0],
     velocity: [0, 0, 0, 0],
-    damping: 1,
-    stiffness: 0.4,
+    damping: 0.8,
+    stiffness: 0.6,
+
+
+    update(delta) {
+        const deltaTime = delta / 1000;
+        this.value = this.value.map((val, i) => {
+            const force = - this.stiffness * (val - this.target[i]);
+            const dampingForce = -this.damping * this.velocity[i];
+            const acceleration = force + dampingForce;
+
+            this.velocity[i] += acceleration * deltaTime;
+            this.velocity[i] = Math.max(Math.min(this.velocity[i], 1), -1);
+            let newValue = val + this.velocity[i] * deltaTime;
+            newValue = Math.max(Math.min(newValue, 5), -5);
+            //console.log(newValue);
+            return newValue;
+        });
+    },
+
+    setTarget(target) {
+        this.target = target;
+    }
+}
+const smoothCamera = {
+
+    value: [0, 0, 0],
+    target: [0, 0, 0],
+    velocity: [0, 0, 0],
+    damping: .5,
+    stiffness: 2,
 
 
     update(delta) {
@@ -60,19 +89,25 @@ const smoothControl = {
     }
 }
 smoothControl.update(8);
+smoothCamera.update(8);
 
 function animate(deltaTime) {
     tentacleControls.update();
+    //updateCamera(socket.head);
     //console.log(sphere.position);
     sphere.position.set(socket.head[0], socket.head[1], socket.head[2]);
     smoothControl.setTarget(socket.controlTarget);
+    //console.log(socket.controlTarget)
     smoothControl.update(deltaTime);
+    smoothCamera.setTarget(socket.head);
+    smoothCamera.update(deltaTime);
+    updateCamera(smoothCamera.value);
+    send2Raspi();
     //console.log(smoothControl.target);
     tentacleControls.lowerX = smoothControl.value[0];
     tentacleControls.lowerZ = smoothControl.value[1];
     tentacleControls.upperX = smoothControl.value[2];
     tentacleControls.upperZ = smoothControl.value[3];
-
     if (pyBackend.listening) {
         //socket.tick();
 
@@ -148,3 +183,9 @@ function chaseWithEaseInOut(a, b, speedLimit, deltaTime) {
         return easeInOut(a, b, t);
     }
 }
+
+addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        send2Raspi();
+    }
+});

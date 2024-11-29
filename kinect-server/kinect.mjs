@@ -50,7 +50,7 @@ if (kinect.open()) {
                     //console.log(solution);
                     clients.forEach(client => {
                         if (client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify({ type: 'state', target: [0, 0, 0], pos: solution }));
+                            client.send(JSON.stringify({ type: 'state', pos: solution }));
                         }
                     });
                 });
@@ -70,7 +70,7 @@ if (kinect.open()) {
             solvePSO(targetRobotFrame).then((solution) => {
                 clients.forEach(client => {
                     if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({ type: 'state', target: targetRobotFrame, pos: solution }));
+                        client.send(JSON.stringify({ type: 'state', pos: solution }));
                     }
                 });
                 //console.log(solution);
@@ -86,6 +86,7 @@ if (kinect.open()) {
         clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(blurredDepthBuffer);
+                client.send(JSON.stringify({ type: 'state', target: targetRobotFrame }))
             }
         });
 

@@ -16,7 +16,7 @@ export const pd = {
         }
         this.currPos = newPos;
         const diffVec = this.currPos.clone().sub(this.prevPos);
-        if (this.diff > 3) {
+        if (this.diff > 10) {
 
             this.diff = 0;
             sendOSCMessage("bang");

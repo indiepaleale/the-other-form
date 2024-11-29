@@ -49,8 +49,8 @@ function handleMessage(message) {
                         target: parsedMessage.target,
                         end: parsedMessage.end,
                     }
-                    controlTarget = state.pos;
-                    head = state.target;
+                    if (state.pos) controlTarget = state.pos;
+                    if (state.target) head = state.target;
                     state_buffer.push(state);
                     break;
 
@@ -74,7 +74,7 @@ function handleMessage(message) {
             console.log('Received byte to JSON:', decoder.decode(uint8Array));
         }
         else {
-            console.log('Received byte, length: ', message.byteLength);
+            //console.log('Received byte, length: ', message.byteLength);
             try {
                 const uint16Array = new Uint16Array(message);
                 kinectDepth.updateVert(uint16Array);

@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-
 const perspHandler = {
     spaceDims: [150, 250, 150], // width, height, depth
     eye2screen: [0, 125, 150],  // from bottom center of wall
@@ -39,7 +38,7 @@ orthoCamera.position.set(perspHandler.eye2screen[0],
 
 // Renderer setup
 export const renderer = new THREE.WebGLRenderer();
-const pixelRatio = window.devicePixelRatio / 2;
+const pixelRatio = window.devicePixelRatio;
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(pixelRatio);
 document.body.appendChild(renderer.domElement);
@@ -50,7 +49,7 @@ orbitControls.enableDamping = true; // Enable damping (inertia)
 orbitControls.dampingFactor = 0.25; // Damping factor
 orbitControls.enableZoom = true; // Enable zooming
 orbitControls.enablePan = false; // Disable panning
-orbitControls.enabled = true;
+orbitControls.enabled = false;
 orbitControls.target.set(0, perspHandler.tvPos[1], 75);
 
 // Set inital camera lookAt
@@ -65,7 +64,13 @@ perspectiveCamera.lookAt(
 
 //scene.fog = new THREE.Fog(0x000000, 300, 450);
 scene.background = new THREE.Color(0x000000);
-
+export function updateCamera(headPos) {
+    perspectiveCamera.position.setX(headPos[0]);
+    perspectiveCamera.lookAt(
+        perspHandler.tvPos[0],
+        perspHandler.tvPos[1],
+        perspHandler.tvPos[2] + perspHandler.spaceDims[2] / 2);
+}
 
 // Add lights
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 1);

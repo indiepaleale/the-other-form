@@ -5,6 +5,13 @@ const gui = new GUI();
 
 const noise = new Noise(Math.random());
 
+const RASP_HOST = import.meta.env.VITE_RASP_HOST || 'localhost';
+const RASP_PORT = import.meta.env.VITE_RASP_PORT || 8000;
+
+const raspiSocket = new WebSocket(`ws://${RASP_HOST}:${RASP_PORT}`);
+
+
+
 const tentacleControls = {
     animated: false,
     lowerX: 0,
@@ -13,7 +20,7 @@ const tentacleControls = {
     upperZ: 0,
     update() {
         if (this.animated) {
-            const time = Date.now() * 0.0001;
+            const time = Date.now() * 0.0002;
             const lowerRange = 1;
             const upperRange = 5;
             this.lowerX = noise.simplex2(time, 0) * lowerRange;
@@ -28,7 +35,7 @@ const pyBackend = {
     isTrainerReady: false,
     isEvaluatorReady: false,
     message: 'Model not ready ...',
-    listening: false,  
+    listening: false,
     refresh: function () { },
     startTraining: function () {
         // Overwritten in ws.js
@@ -74,4 +81,12 @@ gui.close();
 // gui.hide();
 
 
-export { tentacleControls, pyBackend };
+function send2Raspi() {
+    if (raspiSocket.readyState === WebSocket.OPEN) {
+        const control = [tentacleControls.lowerX, tentacleControls.lowerZ, tentacleControls.upperX, tentacleControls.upperZ];
+        const dataString = control.map(value => value.toFixed(2)).join(',')+'\n';
+        raspiSocket.send(dataString);
+
+    }
+}
+export { tentacleControls, pyBackend, send2Raspi };
