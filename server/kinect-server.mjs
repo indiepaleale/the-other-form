@@ -1,5 +1,4 @@
 process.env.PATH = process.env.PATH + ';C:\\Program Files\\Azure Kinect Body Tracking SDK\\tools';
-import { Worker } from 'worker_threads';
 import { WebSocket, WebSocketServer } from 'ws';
 const K4A = await import('kinect-azure');
 const KinectAzure = K4A.default;
