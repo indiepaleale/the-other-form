@@ -1,16 +1,7 @@
 import * as THREE from 'three';
-import { scene } from './scene-setup';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 
-const tentacleRoot = new THREE.Object3D();
-
-
-tentacleRoot.position.set(0, 220, 25);
-tentacleRoot.rotateX(Math.PI);
-scene.add(tentacleRoot);
-
-class Segment {
+export default class Segment {
     constructor({ numSegments = 12, gap = 2.5, rootObject = null, geometry = new THREE.CylinderGeometry(3, 3, 1, 12) }) {
         this.numSegments = numSegments;
         this.gap = gap;
@@ -20,6 +11,7 @@ class Segment {
         this.controller = { x: 0, z: 0 };
         this.segments = [];
         this.geometry = geometry;
+        this.mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         this._init();
     }
 
@@ -60,11 +52,10 @@ class Segment {
     }
 
     _init = () => {
-
         const edges = new THREE.EdgesGeometry(this.geometry, 15);
         const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
         for (let i = 1; i <= this.numSegments; i++) {
-            const segment = new THREE.LineSegments(edges, lineMaterial);
+            const segment = new THREE.Mesh(this.geometry, this.mat);
             segment.position.y = i * this.gap;
             this.segments.push(segment);
             this.rootObject.add(segment);
@@ -97,33 +88,3 @@ class Segment {
     }
 
 }
-
-
-async function loadModel() {
-    return new Promise((resolve, reject) => {
-        const loader = new OBJLoader();
-        loader.load('./assets/new_vertebrae.obj', (glb) => {
-            glb.traverse(function (child) {
-                if (child.isMesh) {
-                    const loadedGeometry = child.geometry.rotateX(-Math.PI / 2);
-                    resolve(loadedGeometry);
-                }
-            });
-        }, undefined, (error) => {
-            reject(error);
-        });
-    });
-}
-
-async function initTentacle() {
-    try {
-        const loadedGeometry = await loadModel();
-
-        const lowerSegment = new Segment({ numSegments: 10, rootObject: tentacleRoot, color: 0xaaaaaa, geometry: loadedGeometry });
-        const upperSegment = new Segment({ numSegments: 14, rootObject: lowerSegment.segments[lowerSegment.segments.length - 1], geometry: loadedGeometry });
-        return { lowerSegment, upperSegment };
-    } catch (err) {
-        console.log(err);
-    }
-}
-export { initTentacle };
