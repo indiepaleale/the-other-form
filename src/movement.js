@@ -75,4 +75,4 @@ addEventListener('keydown', (event) => {
     }
 });
 
-export default movement;
+export { movement,action };

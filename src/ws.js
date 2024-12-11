@@ -1,4 +1,5 @@
 import OSC from "osc-js";
+import { trace } from "./three";
 
 const SERIAL_HOST = 'localhost';
 const SERIAL_WS_PORT = import.meta.env.VITE_SERIAL_SOCKET_PORT || 8000;
@@ -33,6 +34,7 @@ const send2PD = {
 
             this.diff = 0;
             bang();
+            trace.draw(this.currPos.x, this.currPos.y, this.currPos.z);
         }
         this.prevPos = this.currPos;
         this.diff += diffVec.length();

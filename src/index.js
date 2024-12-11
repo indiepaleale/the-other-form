@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import movement from "./movement";
+import {movement} from "./movement";
 import { lowerSegment, upperSegment, scene, renderer, camera } from "./three";
 import "./hydra";
 import { send2Raspi, send2PD } from "./ws.js";
