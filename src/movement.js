@@ -7,8 +7,8 @@ const action = {
     numBodies: 0,
     energy: 0, // 0-100
     energyLimit: 100,
-    energyDecay: 0.05,
-    energyGain: 0.1,
+    energyDecay: 0.1,
+    energyGain: 0.2,
     energyNorm: 0,
     update(numBodies) {
         this.numBodies = numBodies;
@@ -21,12 +21,12 @@ const action = {
 const movement = {
     pause: false,
     zero: false,
-    noiseMul: 0.1,
+    noiseMul: 0.4,
 
     controlSeg1: [0, 0],
     controlSeg2: [0, 0],
 
-    rangeSeg1: 1.5,
+    rangeSeg1: 1,
     rangeSeg2: 5,
 
     time: Date.now(),
@@ -53,7 +53,7 @@ const movement = {
             return;
         }
         if (typeof deltaTime === 'number' && !isNaN(deltaTime)) {
-            this.time += 0.00015 * deltaTime;
+            this.time += 0.0002 * deltaTime;
         }
     },
 
@@ -64,9 +64,6 @@ const movement = {
         noise.simplex2(offset, this.time * mult)];
     },
 
-    searchTarget(target) {
-
-    }
 };
 
 addEventListener('keydown', (event) => {
@@ -79,33 +76,3 @@ addEventListener('keydown', (event) => {
 });
 
 export default movement;
-
-const smoothControl = {
-
-    value: [0, 0, 0, 0],
-    target: [0, 0, 0, 0],
-    velocity: [0, 0, 0, 0],
-    damping: 0.8,
-    stiffness: 5,
-
-
-    update(delta) {
-        const deltaTime = delta / 1000;
-        this.value = this.value.map((val, i) => {
-            const force = - this.stiffness * (val - this.target[i]);
-            const dampingForce = -this.damping * this.velocity[i];
-            const acceleration = force + dampingForce;
-
-            this.velocity[i] += acceleration * deltaTime;
-            this.velocity[i] = Math.max(Math.min(this.velocity[i], 2), -2);
-            let newValue = val + this.velocity[i] * deltaTime;
-            newValue = Math.max(Math.min(newValue, 5), -5);
-            //console.log(newValue);
-            return newValue;
-        });
-    },
-
-    setTarget(target) {
-        this.target = target;
-    }
-}

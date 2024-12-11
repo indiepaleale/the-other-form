@@ -6,25 +6,25 @@ import WebSocket from 'ws'
 
 const OSC_PORT = process.env.OSC_PORT || 8080;
 const SERIAL_SOCKET_PORT = process.env.SERIAL_SOCKET_PORT || 8000;
-const SERIAL_PORT = process.env.SERIAL_PORT || 'COM3';
+const SERIAL_PORT = 'COM6';
 
 const config = { udpClient: { port: OSC_PORT } };
 const osc = new OSC({ plugin: new OSC.BridgePlugin(config) });
 
-// const serialPort = new SerialPort({ path: SERIAL_PORT, baudRate: 9600 }, err => {
-//   if (err) console.error(err);
-// });
+const serialPort = new SerialPort({ path: SERIAL_PORT, baudRate: 9600 }, err => {
+  if (err) console.error(err);
+});
 
 osc.open(); // OSC bridge will listen on port 8080
 
 
-// serialPort.on('error', function (err) {
-//   serialPort.close();
-// })
+serialPort.on('error', function (err) {
+  serialPort.close();
+})
 
-// serialPort.on('close', function () {
-//   console.log('Serial port closed');
-// })
+serialPort.on('close', function () {
+  console.log('Serial port closed');
+})
 
 // WS to bridge messages from the client to the serial port
 

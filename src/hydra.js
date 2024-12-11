@@ -27,7 +27,7 @@ hydra.src(hydra.o0)
     //.layer(hydra.solid(0), .1)
     .add(hydra.src(hydra.s0).color(0.2, 0.4, 0.9), 0.1)
     .diff(hydra.src(hydra.s0).modulate(hydra.src(hydra.o0), 3))
-    // .sub(hydra.noise(6,0.7).color(1,0.9,0.8), 0.005)
+    .sub(hydra.noise(6,0.7).color(1,0.9,0.8), 0.005)
     .sub(hydra.solid(1, 1, 1), 0.005)
     .modulate(hydra.noise(10, 0.5).color(1, 2, 3), 0.002)
     .modulateRotate(hydra.o0, 0.01)
@@ -38,13 +38,15 @@ hydra.solid(0, 0, 0)
     .add(hydra.src(hydra.o3).repeat(8, 5), 0.4)
     .diff(hydra.src(hydra.o3).repeat(8, 5).modulate(hydra.src(hydra.o1), 0.02))
     .blend(hydra.src(hydra.o1), 0.2)
+    .modulateScale(hydra.shape(72,0.5,1.2),0.5)
     .out(hydra.o1);
 
 // rotating viewport
 hydra.solid(0, 0, 0)
     .layer(
         hydra.src(hydra.s1).mask(hydra.shape(4, 1))
-            .rotate(() => Math.sin(hydra.time *0.5) * 0.25))
+            // .rotate(() => Math.sin(hydra.time *0.5) * 0.25)
+        )
     .out(hydra.o3);
 
 /// composite layer

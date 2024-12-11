@@ -156,3 +156,10 @@ function send2Raspi(controls) {
 }
 
 export { depthImage, numBodies, send2Raspi, send2PD }
+
+addEventListener('keydown', (event) => {
+    if (event.key >= '0' && event.key <= '9') {
+        numBodies = parseInt(event.key, 10);
+    }
+    console.log(numBodies);
+});

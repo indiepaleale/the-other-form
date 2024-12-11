@@ -19,7 +19,7 @@ scene.fog = new THREE.Fog(0x000000, 300, 450);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(30, aspectRatio, 0.1, 1000);
-camera.position.set(0, 220, 300);
+camera.position.set(0, 220, 240);
 camera.lookAt(0, 140, 0);
 
 function updateCamera(headPos) {
